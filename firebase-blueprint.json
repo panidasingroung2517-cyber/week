@@ -1,0 +1,200 @@
+{
+  "entities": {
+    "book": {
+      "title": "Book",
+      "description": "Book catalog item in Chot Thean bookstore",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "author": { "type": "string", "maxLength": 128 },
+        "publisher": { "type": "string", "maxLength": 128 },
+        "categoryId": { "type": "string", "maxLength": 64 },
+        "categoryName": { "type": "string", "maxLength": 64 },
+        "format": { "type": "string", "enum": ["physical", "ebook", "both"] },
+        "genre": { "type": "string", "enum": ["novel", "comic", "academic", "knowledge", "children", "general"] },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "stock": { "type": "number" },
+        "coverUrl": { "type": "string", "maxLength": 1024 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "isbn": { "type": "string", "maxLength": 32 },
+        "pages": { "type": "number" },
+        "language": { "type": "string", "maxLength": 32 },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "isFeatured": { "type": "boolean" },
+        "isNewArrival": { "type": "boolean" },
+        "isBestSeller": { "type": "boolean" },
+        "publishedYear": { "type": "number" },
+        "ebookContent": { "type": "string", "maxLength": 20000 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "title", "author", "price", "stock", "format", "genre", "categoryId"]
+    },
+    "category": {
+      "title": "Category",
+      "description": "Book classification category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 64 },
+        "slug": { "type": "string", "maxLength": 64 },
+        "icon": { "type": "string", "maxLength": 64 },
+        "description": { "type": "string", "maxLength": 256 },
+        "bookCount": { "type": "number" }
+      },
+      "required": ["id", "name", "slug"]
+    },
+    "order": {
+      "title": "Order",
+      "description": "Customer purchase transaction order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userEmail": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 128 },
+        "userPhone": { "type": "string", "maxLength": 32 },
+        "shippingAddress": { "type": "string", "maxLength": 512 },
+        "subtotal": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "couponCode": { "type": "string", "maxLength": 32 },
+        "shippingFee": { "type": "number" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"] },
+        "paymentMethod": { "type": "string", "enum": ["promptpay", "credit_card", "cod"] },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid"] },
+        "trackingNumber": { "type": "string", "maxLength": 64 },
+        "notes": { "type": "string", "maxLength": 512 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "userEmail", "total", "status", "paymentMethod", "paymentStatus"]
+    },
+    "review": {
+      "title": "Review",
+      "description": "User rating and commentary for a book",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "bookId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 128 },
+        "rating": { "type": "number" },
+        "title": { "type": "string", "maxLength": 128 },
+        "comment": { "type": "string", "maxLength": 2048 },
+        "isVerifiedPurchase": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["approved", "pending", "rejected"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "bookId", "userId", "userName", "rating", "comment"]
+    },
+    "coupon": {
+      "title": "Coupon",
+      "description": "Promotional discount voucher code",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "code": { "type": "string", "maxLength": 32 },
+        "discountType": { "type": "string", "enum": ["percentage", "fixed"] },
+        "discountValue": { "type": "number" },
+        "minSpend": { "type": "number" },
+        "maxDiscount": { "type": "number" },
+        "expiresAt": { "type": "string", "maxLength": 64 },
+        "isActive": { "type": "boolean" },
+        "usageCount": { "type": "number" }
+      },
+      "required": ["id", "code", "discountType", "discountValue", "minSpend", "isActive"]
+    },
+    "userProfile": {
+      "title": "UserProfile",
+      "description": "User customer and staff profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 1024 },
+        "role": { "type": "string", "enum": ["customer", "staff", "admin"] },
+        "phone": { "type": "string", "maxLength": 32 },
+        "address": { "type": "string", "maxLength": 512 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "readingProgress": {
+      "title": "ReadingProgress",
+      "description": "User reading progress in an E-Book",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "bookId": { "type": "string", "maxLength": 128 },
+        "currentChapter": { "type": "number" },
+        "currentPage": { "type": "number" },
+        "totalChapters": { "type": "number" },
+        "totalPages": { "type": "number" },
+        "progressPercent": { "type": "number" },
+        "lastReadAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "bookId", "currentChapter", "currentPage", "progressPercent"]
+    },
+    "notification": {
+      "title": "Notification",
+      "description": "In-app alerts and notifications for users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 128 },
+        "message": { "type": "string", "maxLength": 512 },
+        "type": { "type": "string", "enum": ["order", "promo", "system"] },
+        "link": { "type": "string", "maxLength": 256 },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "title", "message", "isRead"]
+    }
+  },
+  "firestore": {
+    "/books/{bookId}": {
+      "schema": { "$ref": "#/entities/book" },
+      "description": "Collection of books for sale"
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/category" },
+      "description": "Book catalog categories"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/order" },
+      "description": "Customer purchase orders"
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/review" },
+      "description": "Book customer ratings and reviews"
+    },
+    "/coupons/{couponId}": {
+      "schema": { "$ref": "#/entities/coupon" },
+      "description": "Discount coupon vouchers"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/userProfile" },
+      "description": "Registered user profile records"
+    },
+    "/users/{userId}/readingProgress/{bookId}": {
+      "schema": { "$ref": "#/entities/readingProgress" },
+      "description": "User progress per E-Book"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/notification" },
+      "description": "User notification alerts"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/userProfile" },
+      "description": "List of system administrators with elevated permissions"
+    }
+  }
+}

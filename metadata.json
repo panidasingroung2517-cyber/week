@@ -1,0 +1,8 @@
+{
+  "name": "ร้านหนังสือออนไลน์ Chot Thean",
+  "description": "ร้านหนังสือออนไลน์ Chot Thean (โชติเทียน) - ร้านหนังสือครบวงจร หนังสือเล่ม E-Book นิยาย การ์ตูน หนังสือเรียน พร้อมระบบจัดการและติดตามคำสั่งซื้อ",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

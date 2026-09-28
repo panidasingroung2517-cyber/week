@@ -1,0 +1,171 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email != null && request.auth.token.email == 'panidasingroung2517@gmail.com') ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isStaffOrAdmin() {
+      return isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)));
+    }
+
+    // Validation blueprints
+    function isValidBook(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.author is string && data.author.size() <= 128 &&
+             data.price is number && data.price >= 0 &&
+             data.stock is number && data.stock >= 0 &&
+             data.format in ['physical', 'ebook', 'both'] &&
+             data.genre in ['novel', 'comic', 'academic', 'knowledge', 'children', 'general'];
+    }
+
+    function isValidCategory(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.name is string && data.name.size() <= 64 &&
+             data.slug is string && data.slug.size() <= 64;
+    }
+
+    function isValidOrder(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.total is number && data.total >= 0 &&
+             data.status in ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] &&
+             data.paymentMethod in ['promptpay', 'credit_card', 'cod'] &&
+             data.paymentStatus in ['pending', 'paid'];
+    }
+
+    function isValidReview(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.bookId is string && data.bookId.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             data.comment is string && data.comment.size() <= 2048;
+    }
+
+    // Books Collection
+    match /books/{bookId} {
+      allow read: if true;
+      allow create: if isStaffOrAdmin() && isValidId(bookId) && isValidBook(incoming());
+      allow update: if isStaffOrAdmin() && isValidId(bookId) && isValidBook(incoming());
+      allow delete: if isAdmin() && isValidId(bookId);
+    }
+
+    // Categories Collection
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create: if isStaffOrAdmin() && isValidId(categoryId) && isValidCategory(incoming());
+      allow update: if isStaffOrAdmin() && isValidId(categoryId) && isValidCategory(incoming());
+      allow delete: if isAdmin() && isValidId(categoryId);
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && isValidId(orderId) && (existing().userId == request.auth.uid || isStaffOrAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      allow create: if isSignedIn() && isValidId(orderId) &&
+                       incoming().userId == request.auth.uid &&
+                       isValidOrder(incoming());
+      allow update: if isSignedIn() && isValidId(orderId) && (
+        isStaffOrAdmin() ||
+        (existing().userId == request.auth.uid &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']) &&
+         incoming().status == 'cancelled' &&
+         existing().status == 'pending')
+      );
+      allow delete: if isAdmin() && isValidId(orderId);
+    }
+
+    // Reviews Collection
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(reviewId) &&
+                       incoming().userId == request.auth.uid &&
+                       isValidReview(incoming());
+      allow update: if isSignedIn() && isValidId(reviewId) && (
+        isAdmin() ||
+        (existing().userId == request.auth.uid &&
+         isValidReview(incoming()) &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'comment', 'rating', 'updatedAt']))
+      );
+      allow delete: if isSignedIn() && isValidId(reviewId) && (isAdmin() || existing().userId == request.auth.uid);
+    }
+
+    // Coupons Collection
+    match /coupons/{couponId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(couponId);
+    }
+
+    // User Profiles Collection & Subcollections
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && (incoming().role == 'customer' || isAdmin());
+      allow update: if isSignedIn() && isValidId(userId) && (
+        isAdmin() ||
+        (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'phone', 'address', 'wishlist', 'purchasedEbookIds', 'updatedAt']))
+      );
+      allow delete: if isAdmin() && isValidId(userId);
+
+      // Reading Progress subcollection per E-Book
+      match /readingProgress/{bookId} {
+        allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+        allow write: if isSignedIn() && request.auth.uid == userId && isValidId(bookId);
+      }
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && isValidId(notificationId) && (existing().userId == request.auth.uid || isStaffOrAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      allow create: if isStaffOrAdmin() && isValidId(notificationId);
+      allow update: if isSignedIn() && isValidId(notificationId) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isSignedIn() && isValidId(notificationId) &&
+                       (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    // Admin & Staff lists
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin() && isValidId(adminId);
+    }
+
+    match /staff/{staffId} {
+      allow read: if isStaffOrAdmin();
+      allow write: if isAdmin() && isValidId(staffId);
+    }
+  }
+}
